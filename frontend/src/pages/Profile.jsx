@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { getBookmarks, getHistory, getRatings } from '../api/backend';
+import { getBookmarks, getHistory, getRatings, getStatuses } from '../api/backend';
 import { getManga, getCoverUrl, getTitle } from '../api/mangadex';
 import { BookMarked, History, Star, User } from 'lucide-react';
 import Layout from '../components/Layout';
@@ -9,7 +9,7 @@ import { ProfileSkeleton } from '../components/Skeleton';
 
 export default function Profile() {
     const { user, loading: authLoading } = useAuth();
-    const [bookmarks, setBookmarks] = useState([]);
+    const [statuses, setStatuses] = useState([]);
     const [history, setHistory] = useState([]);
     const [ratings, setRatings] = useState([]);
     const [mangaCache, setMangaCache] = useState({});
@@ -18,14 +18,14 @@ export default function Profile() {
     useEffect(() => {
         if (!user) return;
 
-        Promise.all([getBookmarks(), getHistory(), getRatings()])
-            .then(async ([b, h, r]) => {
-                setBookmarks(b);
+        Promise.all([getStatuses(), getHistory(), getRatings()])
+            .then(async ([s, h, r]) => {
+                setStatuses(s);
                 setHistory(h);
                 setRatings(r);
 
                 // Fetch manga details
-                const ids = [...new Set([...b.map(x => x.manga_id), ...h.map(x => x.manga_id), ...r.map(x => x.manga_id)])];
+                const ids = [...new Set([...s.map(x => x.manga_id), ...h.map(x => x.manga_id), ...r.map(x => x.manga_id)])];
                 const cache = {};
                 // Batch requests in chunks of 20
                 for (let i = 0; i < ids.length; i += 20) {
@@ -72,6 +72,14 @@ export default function Profile() {
         );
     };
 
+    const STATUS_LABELS = {
+        planned: 'В планах',
+        reading: 'Читаю',
+        completed: 'Прочитано',
+        dropped: 'Брошено',
+        on_hold: 'Отложено'
+    };
+
     return (
         <Layout>
             <div className="flex items-center gap-4 mb-8 bg-surface p-6 rounded-2xl border border-border">
@@ -88,13 +96,19 @@ export default function Profile() {
                 <div className="bg-surface rounded-2xl border border-border overflow-hidden flex flex-col h-[600px]">
                     <div className="p-4 border-b border-border flex items-center gap-2 font-bold text-lg shrink-0">
                         <BookMarked className="text-blue-400" />
-                        Закладки ({bookmarks.length})
+                        Мои списки ({statuses.length})
                     </div>
                     <div className="p-2 overflow-y-auto custom-scrollbar flex-1">
-                        {bookmarks.length > 0 ? (
-                            bookmarks.map(b => <MangaItem key={b.id} mangaId={b.manga_id} />)
+                        {statuses.length > 0 ? (
+                            statuses.map(s => (
+                                <MangaItem
+                                    key={s.id}
+                                    mangaId={s.manga_id}
+                                    subtitle={<span className="capitalize text-primary">{STATUS_LABELS[s.status] || s.status}</span>}
+                                />
+                            ))
                         ) : (
-                            <div className="p-4 text-center text-muted">Нет закладок</div>
+                            <div className="p-4 text-center text-muted">Список пуст</div>
                         )}
                     </div>
                 </div>

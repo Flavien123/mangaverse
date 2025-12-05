@@ -1,0 +1,208 @@
+Диаграммы для проекта Manga Reader
+
+=== 1. Архитектура приложения ===
+
+```mermaid
+graph TB
+    User[Пользователь] -->|HTTP/HTTPS| Frontend[Frontend<br/>React + Tailwind]
+    Frontend -->|REST API| Backend[Backend<br/>FastAPI]
+    Backend -->|SQL| DB[(PostgreSQL<br/>Database)]
+    Backend -->|HTTP| External[Внешний API<br/>источник манги]
+    
+    style Frontend fill:#4ade80,stroke:#22c55e,color:#000
+    style Backend fill:#3b82f6,stroke:#2563eb,color:#fff
+    style DB fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style External fill:#f59e0b,stroke:#d97706,color:#000
+```
+
+=== 2. ER-диаграмма базы данных ===
+
+erDiagram
+    USERS ||--o{ MANGA_STATUSES : has
+    USERS ||--o{ READING_HISTORY : has
+    USERS ||--o{ RATINGS : has
+    
+    USERS {
+        int id PK
+        string username
+        string email
+        string password_hash
+        datetime created_at
+    }
+    
+    MANGA_STATUSES {
+        int id PK
+        int user_id FK
+        string manga_id
+        enum status
+        datetime updated_at
+    }
+    
+    READING_HISTORY {
+        int id PK
+        int user_id FK
+        string manga_id
+        string chapter_id
+        int page
+        datetime updated_at
+    }
+    
+    RATINGS {
+        int id PK
+        int user_id FK
+        string manga_id
+        int score
+        datetime created_at
+    }
+
+=== 3. Схема Docker контейнеров ===
+
+graph LR
+    subgraph "Docker Compose"
+        Frontend[Frontend Container<br/>Nginx + React]
+        Backend[Backend Container<br/>FastAPI + Python]
+        DB[(Database Container<br/>PostgreSQL)]
+    end
+    
+    Frontend -->|Proxy /api| Backend
+    Backend -->|Port 5432| DB
+    User[Пользователь] -->|Port 80| Frontend
+    
+    style Frontend fill:#4ade80,stroke:#22c55e,color:#000
+    style Backend fill:#3b82f6,stroke:#2563eb,color:#fff
+    style DB fill:#8b5cf6,stroke:#7c3aed,color:#fff
+
+=== 4. Последовательность аутентификации ===
+
+sequenceDiagram
+    participant U as Пользователь
+    participant F as Frontend
+    participant B as Backend
+    participant DB as Database
+    
+    U->>F: Ввод логина/пароля
+    F->>B: POST /auth/login
+    B->>DB: Проверка пользователя
+    DB-->>B: Данные пользователя
+    B->>B: Проверка пароля
+    B->>B: Генерация JWT токена
+    B-->>F: Токен + данные
+    F->>F: Сохранение токена
+    F-->>U: Успешный вход
+
+=== 5. Процесс чтения манги ===
+
+sequenceDiagram
+    participant U as Пользователь
+    participant F as Frontend
+    participant B as Backend
+    participant API as Внешний API
+    participant DB as Database
+    
+    U->>F: Открыть главу
+    F->>API: Запрос страниц главы
+    API-->>F: Список URL страниц
+    F-->>U: Отображение страниц
+    
+    Note over F,B: Сохранение прогресса
+    F->>B: POST /user/history
+    B->>DB: Обновление истории
+    DB-->>B: Подтверждение
+    B-->>F: Успех
+
+=== 6. Структура компонентов Frontend ===
+
+graph TD
+    App[App.jsx] --> Router[React Router]
+    Router --> Home[Home.jsx]
+    Router --> Catalog[Catalog.jsx]
+    Router --> Detail[MangaDetail.jsx]
+    Router --> Reader[Reader.jsx]
+    Router --> Profile[Profile.jsx]
+    Router --> Auth[Login/Register]
+    
+    App --> AuthContext[AuthContext]
+    App --> Layout[Layout Component]
+    
+    Home --> MangaCard[MangaCard]
+    Catalog --> MangaCard
+    Catalog --> Pagination[Pagination]
+    Detail --> Skeleton[Skeleton]
+    Profile --> Skeleton
+    
+    style App fill:#4ade80,stroke:#22c55e,color:#000
+    style AuthContext fill:#f59e0b,stroke:#d97706,color:#000
+    style Layout fill:#3b82f6,stroke:#2563eb,color:#fff
+
+=== 7. Структура Backend модулей ===
+
+graph TD
+    Main[main.py] --> Routers{Routers}
+    Routers --> AuthRouter[auth.py]
+    Routers --> UserRouter[user.py]
+    
+    Main --> Database[database.py]
+    Main --> Config[config.py]
+    
+    AuthRouter --> Auth[auth.py utils]
+    UserRouter --> Auth
+    
+    AuthRouter --> Models[models.py]
+    UserRouter --> Models
+    
+    Models --> Database
+    
+    AuthRouter --> Schemas[schemas.py]
+    UserRouter --> Schemas
+    
+    style Main fill:#4ade80,stroke:#22c55e,color:#000
+    style Routers fill:#3b82f6,stroke:#2563eb,color:#fff
+    style Models fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Database fill:#f59e0b,stroke:#d97706,color:#000
+
+=== 8. Жизненный цикл запроса ===
+
+graph LR
+    A[HTTP Request] --> B[Nginx]
+    B --> C{Путь}
+    C -->|/api/*| D[Backend FastAPI]
+    C -->|/*| E[Static Files]
+    
+    D --> F[Middleware]
+    F --> G[Router]
+    G --> H[Endpoint Handler]
+    H --> I[Database Query]
+    I --> J[Response]
+    
+    E --> K[React App]
+    
+    style D fill:#3b82f6,stroke:#2563eb,color:#fff
+    style E fill:#4ade80,stroke:#22c55e,color:#000
+    style I fill:#8b5cf6,stroke:#7c3aed,color:#fff
+
+=== 9. Состояния статуса манги ===
+
+stateDiagram-v2
+    [*] --> Planned: Добавить в планы
+    Planned --> Reading: Начать читать
+    Reading --> Completed: Дочитать
+    Reading --> OnHold: Отложить
+    Reading --> Dropped: Бросить
+    OnHold --> Reading: Продолжить
+    OnHold --> Dropped: Бросить
+    Dropped --> Reading: Возобновить
+    Completed --> [*]
+
+=== 10. Процесс развертывания ===
+
+graph TD
+    Start([Запуск deploy.sh]) --> Stop[docker compose down]
+    Stop --> Build[docker compose build]
+    Build --> Up[docker compose up -d]
+    Up --> Wait[Ожидание 10 сек]
+    Wait --> Check[docker compose ps]
+    Check --> End([Развертывание завершено])
+    
+    style Start fill:#4ade80,stroke:#22c55e,color:#000
+    style End fill:#4ade80,stroke:#22c55e,color:#000
+    style Build fill:#3b82f6,stroke:#2563eb,color:#fff
