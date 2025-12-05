@@ -13,7 +13,6 @@ from ..auth import get_current_user
 
 router = APIRouter(prefix="/user", tags=["user"])
 
-# ... (Previous endpoints for bookmarks/history/ratings - I will include them to ensure file integrity)
 
 @router.get("/bookmarks", response_model=list[BookmarkResponse])
 async def get_bookmarks(
@@ -29,7 +28,6 @@ async def add_bookmark(
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
-    # Check if exists
     result = await db.execute(
         select(Bookmark).where(
             Bookmark.user_id == user.id,
@@ -60,7 +58,6 @@ async def remove_bookmark(
     await db.commit()
     return {"message": "Bookmark removed"}
 
-# History
 @router.get("/history", response_model=list[HistoryResponse])
 async def get_history(
     user: User = Depends(get_current_user),
@@ -90,7 +87,6 @@ async def update_history(
     if existing:
         existing.chapter_id = history.chapter_id
         existing.page = history.page
-        # updated_at updates automatically on DB side or we can force it
         await db.commit()
         await db.refresh(existing)
         return existing
@@ -106,7 +102,6 @@ async def update_history(
         await db.refresh(new_history)
         return new_history
 
-# Ratings
 @router.get("/ratings", response_model=list[RatingResponse])
 async def get_ratings(
     user: User = Depends(get_current_user),
@@ -145,7 +140,6 @@ async def add_rating(
         await db.refresh(new_rating)
         return new_rating
 
-# Status
 @router.get("/status", response_model=list[StatusResponse])
 async def get_statuses(
     user: User = Depends(get_current_user),

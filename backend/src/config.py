@@ -1,7 +1,7 @@
 from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
-    SECRET_KEY: str = "super-secret-key-change-in-production"
+    SECRET_KEY: str = "sdkjflsdkajfklsdfjklsdajf123213213"
     DATABASE_URL: str = "postgresql+asyncpg://user:password@localhost/manga_db"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7 days
 
