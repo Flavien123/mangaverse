@@ -18,6 +18,7 @@ class User(Base):
     username: Mapped[str] = mapped_column(String(50), unique=True)
     email: Mapped[str] = mapped_column(String(100), unique=True)
     password_hash: Mapped[str] = mapped_column(String(255))
+    role: Mapped[str] = mapped_column(String(20), default="user")
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
     
     # Relationships
@@ -31,7 +32,7 @@ class Bookmark(Base):
     
     id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
-    manga_id: Mapped[str] = mapped_column(String(36))  # MangaDex UUID
+    manga_id: Mapped[str] = mapped_column(String(36))
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
     
     user: Mapped["User"] = relationship(back_populates="bookmarks")
@@ -65,7 +66,7 @@ class MangaStatus(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     manga_id: Mapped[str] = mapped_column(String(36))
-    status: Mapped[StatusType] = mapped_column(SQLEnum(StatusType))
+    status: Mapped[StatusType] = mapped_column(SQLEnum(StatusType), index=True)
     updated_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), onupdate=func.now())
     
     user: Mapped["User"] = relationship(back_populates="statuses")
