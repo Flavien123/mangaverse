@@ -5,7 +5,6 @@
 @layer base {
   body {
     @apply bg-background text-white antialiased;
-    /* Reset default Vite styles */
     margin: 0;
     display: block;
     min-width: 0;
@@ -48,7 +47,6 @@
   }
 }
 
-/* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
 }

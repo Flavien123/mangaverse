@@ -19,7 +19,7 @@ export default function Pagination({ page, totalPages, onPageChange }) {
 
             <button
                 onClick={() => onPageChange(page + 1)}
-                disabled={!totalPages || page >= totalPages} // If totalPages is unknown, we might need different logic, but usually we know total or just check hasNext
+                disabled={!totalPages || page >= totalPages} 
                 className="p-2 rounded-lg bg-surface border border-border hover:bg-surface-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
                 <ChevronRight size={20} />
